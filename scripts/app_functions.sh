@@ -48,7 +48,7 @@ cp_readlink() {
 # $1 = install dir
 fix_env() {
   # Cleanup and make dirs
-  rm -rf $MAGISKBIN/*
+  [ -n "$MAGISKBIN" ] && rm -rf "$MAGISKBIN"/*
   mkdir -p $MAGISKBIN 2>/dev/null
   chmod 700 /data/adb
   cp_readlink $1 $MAGISKBIN
@@ -180,7 +180,10 @@ printvar() {
 
 run_action() {
   local MODID="$1"
-  cd "/data/adb/modules/$MODID"
+  if ! echo "$MODID" | grep -qE '^[a-zA-Z0-9._-]+$'; then
+    return 1
+  fi
+  cd "/data/adb/modules/$MODID" || return 1
   sh ./action.sh
   local RES=$?
   cd /

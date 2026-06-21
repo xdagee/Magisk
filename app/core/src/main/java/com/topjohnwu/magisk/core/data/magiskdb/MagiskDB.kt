@@ -16,7 +16,8 @@ open class MagiskDB {
         crossinline mapper: (Map<String, String>) -> R
     ): List<R> {
         return withContext(Dispatchers.IO) {
-            val out = Shell.cmd("magisk --sqlite '$query'").await().out
+            val escapedQuery = query.replace("'", "'\\''")
+            val out = Shell.cmd("magisk --sqlite '$escapedQuery'").await().out
             out.map { line ->
                 line.split("\\|".toRegex())
                     .map { it.split("=", limit = 2) }
@@ -29,7 +30,8 @@ open class MagiskDB {
 
     suspend fun exec(query: String) {
         withContext(Dispatchers.IO) {
-            Shell.cmd("magisk --sqlite '$query'").await()
+            val escapedQuery = query.replace("'", "'\\''")
+            Shell.cmd("magisk --sqlite '$escapedQuery'").await()
         }
     }
 
@@ -40,7 +42,7 @@ open class MagiskDB {
                 is Boolean -> if (it) "1" else "0"
                 is Number -> it.toString()
                 is Literal -> it.str
-                else -> "\"$it\""
+                else -> "\"" + it.toString().replace("\"", "\"\"") + "\""
             }
         }
         return "($keys) VALUES($values)"

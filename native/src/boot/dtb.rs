@@ -2,7 +2,6 @@ use argh::FromArgs;
 use base::{LoggedResult, MappedFile, Utf8CStr, argh};
 use fdt::node::{FdtNode, NodeProperty};
 use fdt::{Fdt, FdtError};
-use std::cell::UnsafeCell;
 
 use crate::check_env;
 use crate::patch::patch_verity;
@@ -232,7 +231,7 @@ fn dtb_patch(file: &Utf8CStr) -> LoggedResult<bool> {
                 boot_args.value.windows(14).for_each(|w| {
                     if w == b"skip_initramfs" {
                         let w = unsafe {
-                            &mut *std::mem::transmute::<&[u8], &UnsafeCell<[u8]>>(w).get()
+                            std::slice::from_raw_parts_mut(w.as_ptr() as *mut u8, w.len())
                         };
                         w[..=4].copy_from_slice(b"want");
                         eprintln!("Patch [skip_initramfs] -> [want_initramfs] in dtb.{n:04}");
@@ -248,7 +247,7 @@ fn dtb_patch(file: &Utf8CStr) -> LoggedResult<bool> {
             for child in fstab.children() {
                 if let Some(flags) = child.property("fsmgr_flags") {
                     let flags = unsafe {
-                        &mut *std::mem::transmute::<&[u8], &UnsafeCell<[u8]>>(flags.value).get()
+                        std::slice::from_raw_parts_mut(flags.value.as_ptr() as *mut u8, flags.value.len())
                     };
                     if patch_verity(flags) != flags.len() {
                         patched = true;

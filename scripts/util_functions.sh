@@ -64,7 +64,7 @@ getvar() {
   local PROPPATH='/data/.magisk /cache/.magisk'
   [ ! -z $MAGISKTMP ] && PROPPATH="$MAGISKTMP/.magisk/config $PROPPATH"
   VALUE=$(grep_prop $VARNAME $PROPPATH)
-  [ ! -z $VALUE ] && eval $VARNAME=\$VALUE
+  [ ! -z "$VALUE" ] && printf -v "$VARNAME" '%s' "$VALUE"
 }
 
 is_mounted() {
@@ -405,8 +405,8 @@ find_boot_image() {
 flash_image() {
   local CMD1
   case "$1" in
-    *.gz) CMD1="gzip -d < '$1' 2>/dev/null";;
-    *)    CMD1="cat '$1'";;
+    *.gz) CMD1="gzip -d";;
+    *)    CMD1="cat";;
   esac
   if [ -b "$2" ]; then
     local img_sz=$(stat -c '%s' "$1")
@@ -415,13 +415,13 @@ flash_image() {
     blockdev --setrw "$2"
     local blk_ro=$(blockdev --getro "$2")
     [ "$blk_ro" -eq 1 ] && return 2
-    eval "$CMD1" | cat - /dev/zero > "$2" 2>/dev/null
+    $CMD1 < "$1" 2>/dev/null | cat - /dev/zero > "$2" 2>/dev/null
   elif [ -c "$2" ]; then
     flash_eraseall "$2" >&2
-    eval "$CMD1" | nandwrite -p "$2" - >&2
+    $CMD1 < "$1" 2>/dev/null | nandwrite -p "$2" - >&2
   else
     ui_print "- Not block or char device, storing image"
-    eval "$CMD1" > "$2" 2>/dev/null
+    $CMD1 < "$1" > "$2" 2>/dev/null
   fi
   return 0
 }
@@ -667,14 +667,17 @@ install_module() {
   $BOOTMODE && MODDIRNAME=modules_update
   local MODULEROOT=/data/adb/$MODDIRNAME
   MODID=$(grep_prop id $TMPDIR/module.prop)
+  if ! echo "$MODID" | grep -qE '^[a-zA-Z0-9._-]+$'; then
+    abort "! Invalid module ID: $MODID"
+  fi
   MODNAME=$(grep_prop name $TMPDIR/module.prop)
   MODAUTH=$(grep_prop author $TMPDIR/module.prop)
   MODPATH=$MODULEROOT/$MODID
 
   # Create mod paths
-  rm -rf $MODPATH
-  mkdir -p $MODPATH
-  chcon u:object_r:system_file:s0 $MODPATH
+  rm -rf "$MODPATH"
+  mkdir -p "$MODPATH"
+  chcon u:object_r:system_file:s0 "$MODPATH"
 
   if is_legacy_script; then
     unzip -oj "$ZIPFILE" module.prop install.sh uninstall.sh 'common/*' -d $TMPDIR >&2

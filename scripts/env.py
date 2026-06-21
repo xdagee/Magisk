@@ -91,9 +91,8 @@ def ensure_cargo():
         # Go through rustup proxies by default if available
         os.environ["RUSTUP_TOOLCHAIN"] = str(paths().rust_sysroot)
     else:
-        os.environ["PATH"] = (
-            f"{paths().rust_sysroot / "bin"}{os.pathsep}{os.environ["PATH"]}"
-        )
+        rust_bin = paths().rust_sysroot / "bin"
+        os.environ["PATH"] = f"{rust_bin}{os.pathsep}{os.environ['PATH']}"
         # Cargo calls executables in $RUSTROOT/lib/rustlib/$TRIPLE/bin, we need
         # to make sure the runtime linker also search $RUSTROOT/lib for libraries.
         # This is only required on Unix, as Windows search dlls from PATH.

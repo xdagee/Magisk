@@ -518,7 +518,14 @@ def setup_ndk():
             if hasattr(tarfile, "data_filter"):
                 tar.extractall(paths().ndk.parent, filter="tar")
             else:
-                tar.extractall(paths().ndk.parent)
+                def _safe_filter(member, path):
+                    if member.name.startswith("/") or ".." in member.name:
+                        raise ValueError(f"unsafe path in archive: {member.name}")
+                    return member
+                tar.extractall(paths().ndk.parent, members=[
+                    m for m in tar.getmembers()
+                    if not (m.name.startswith("/") or ".." in m.name)
+                ])
 
     rm_rf(paths().ndk)
     mv(ondk_path, paths().ndk)

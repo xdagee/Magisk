@@ -167,6 +167,8 @@ static bool validate(const char *pkg, const char *proc) {
 }
 
 static bool add_hide_set(const char *pkg, const char *proc) {
+    if (!validate(pkg, proc))
+        return false;
     auto p = pkg_to_procs[pkg].emplace(proc);
     if (!p.second)
         return false;

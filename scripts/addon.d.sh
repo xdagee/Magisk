@@ -9,8 +9,8 @@
 
 trampoline() {
   mount /data 2>/dev/null
-  if [ -f $MAGISKBIN/addon.d.sh ]; then
-    exec sh $MAGISKBIN/addon.d.sh "$@"
+  if [ -f "$MAGISKBIN/addon.d.sh" ]; then
+    exec sh "$MAGISKBIN/addon.d.sh" "$@"
     exit $?
   elif [ "$1" = post-restore ]; then
     BOOTMODE=false
@@ -44,16 +44,16 @@ trampoline() {
 
 # Always use the script in /data
 MAGISKBIN=/data/adb/magisk
-[ "$0" = $MAGISKBIN/addon.d.sh ] || trampoline "$@"
+[ "$0" = "$MAGISKBIN/addon.d.sh" ] || trampoline "$@"
 
 V1_FUNCS=/tmp/backuptool.functions
 V2_FUNCS=/postinstall/tmp/backuptool.functions
 
-if [ -f $V1_FUNCS ]; then
-  . $V1_FUNCS
+if [ -f "$V1_FUNCS" ]; then
+  . "$V1_FUNCS"
   backuptool_ab=false
-elif [ -f $V2_FUNCS ]; then
-  . $V2_FUNCS
+elif [ -f "$V2_FUNCS" ]; then
+  . "$V2_FUNCS"
 else
   return 1
 fi

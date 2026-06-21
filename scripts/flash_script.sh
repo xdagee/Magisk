@@ -14,13 +14,13 @@ OUTFD=$2
 COMMONDIR=$INSTALLER/assets
 CHROMEDIR=$INSTALLER/assets/chromeos
 
-if [ ! -f $COMMONDIR/util_functions.sh ]; then
+if [ ! -f "$COMMONDIR/util_functions.sh" ]; then
   echo "! Unable to extract zip file!"
   exit 1
 fi
 
 # Load utility functions
-. $COMMONDIR/util_functions.sh
+. "$COMMONDIR/util_functions.sh"
 
 setup_flashable
 

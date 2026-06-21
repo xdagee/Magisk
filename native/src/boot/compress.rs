@@ -118,7 +118,7 @@ impl<W: Write> Write for LZ4BlockEncoder<W> {
             self.write.write_pod(&LZ4_MAGIC)?;
         }
 
-        self.total += buf.len() as u32;
+        self.total = self.total.saturating_add(buf.len() as u32);
         while !buf.is_empty() {
             let (b, chunk) = self.chunker.add_data(buf);
             buf = b;

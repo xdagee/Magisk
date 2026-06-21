@@ -62,6 +62,8 @@ dump_vars() {
   local val
   for name in $@; do
     eval val=\$$name
+    val=${val//\\/\\\\}
+    val=${val//\"/\\\"}
     echo local $name=\"$val\"\;
   done
 }

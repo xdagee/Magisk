@@ -168,11 +168,14 @@ class FlashViewModel : BaseViewModel() {
 
         val (dir, zipFile, displayName) = prepResult
 
+        val escapedName = displayName.replace("'", "'\\''")
+        val escapedPath = zipFile.absolutePath.replace("'", "'\\''")
+
         val success = withContext(Dispatchers.IO) {
             runSuCommand(
                 emu,
-                "echo '- Installing $displayName'; " +
-                "sh $dir/update-binary dummy 1 '${zipFile.absolutePath}'; " +
+                "echo '- Installing $escapedName'; " +
+                "sh $dir/update-binary dummy 1 '$escapedPath'; " +
                 "EXIT=\$?; " +
                 "if [ \$EXIT -ne 0 ]; then echo '! Installation failed'; fi; " +
                 "exit \$EXIT"

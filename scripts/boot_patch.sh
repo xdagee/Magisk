@@ -136,7 +136,7 @@ case $STATUS in
     # Stock boot
     ui_print "- Stock boot image detected"
     SHA1=$(./magiskboot sha1 "$BOOTIMAGE" 2>/dev/null)
-    cat $BOOTIMAGE > stock_boot.img
+    cat "$BOOTIMAGE" > stock_boot.img
     cp -af $RAMDISK ramdisk.cpio.orig 2>/dev/null
     ;;
   1 )

@@ -18,7 +18,10 @@ run_cvd_bin() {
 }
 
 setup_env() {
-  curl -LO https://github.com/topjohnwu/magisk-files/releases/download/files/cuttlefish-base_1.2.0_amd64.deb
+  local deb_url="https://github.com/topjohnwu/magisk-files/releases/download/files/cuttlefish-base_1.2.0_amd64.deb"
+  curl -LO "$deb_url"
+  local deb_sha256=$(sha256sum cuttlefish-base_*_*64.deb | awk '{print $1}')
+  echo "Downloaded cuttlefish-base deb (sha256: $deb_sha256)"
   sudo apt-get update
   sudo dpkg -i ./cuttlefish-base_*_*64.deb || sudo apt-get install -f
   rm cuttlefish-base_*_*64.deb

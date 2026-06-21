@@ -207,7 +207,7 @@ boot_img::boot_img(const char *image) :
 map(image), k_fmt(FileFormat::UNKNOWN), r_fmt(FileFormat::UNKNOWN), e_fmt(FileFormat::UNKNOWN) {
     fprintf(stderr, "Parsing boot image: [%s]\n", image);
     for (const uint8_t *addr = map.data(); addr < map.data() + map.size(); ++addr) {
-        FileFormat fmt = check_fmt(addr, map.size());
+        FileFormat fmt = check_fmt(addr, map.data() + map.size() - addr);
         switch (fmt) {
         case FileFormat::CHROMEOS:
             // chromeos require external signing
@@ -288,6 +288,9 @@ static int find_dtb_offset(const uint8_t *buf, unsigned sz) {
         curr = static_cast<uint8_t*>(memmem(curr, end - curr, DTB_MAGIC, sizeof(fdt_header::fdt32_t)));
         if (curr == nullptr)
             return -1;
+
+        if (end - curr < 12)
+            continue;
 
         auto fdt_hdr = reinterpret_cast<const fdt_header *>(curr);
 
@@ -596,11 +599,14 @@ bool boot_img::parse_image(const uint8_t *addr, FileFormat type) {
         if (BUFFER_MATCH(footer, AVB_FOOTER_MAGIC)) {
             avb_footer = static_cast<const AvbFooter*>(footer);
             // Double check if meta header exists
-            const void *meta = payload.data() + __builtin_bswap64(avb_footer->vbmeta_offset);
-            if (BUFFER_MATCH(meta, AVB_MAGIC)) {
-                fprintf(stderr, "VBMETA\n");
-                flags[AVB_FLAG] = true;
-                vbmeta = static_cast<const AvbVBMetaImageHeader*>(meta);
+            uint64_t vbmeta_off = __builtin_bswap64(avb_footer->vbmeta_offset);
+            if (vbmeta_off < payload.size()) {
+                const void *meta = payload.data() + vbmeta_off;
+                if (BUFFER_MATCH(meta, AVB_MAGIC)) {
+                    fprintf(stderr, "VBMETA\n");
+                    flags[AVB_FLAG] = true;
+                    vbmeta = static_cast<const AvbVBMetaImageHeader*>(meta);
+                }
             }
         }
     }

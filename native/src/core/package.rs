@@ -100,6 +100,9 @@ fn read_certificate(apk: &mut File, version: i32) -> Vec<u8> {
         }
 
         // Next, find the start of the APK signing block
+        if central_dir_off < 24 {
+            Err(bad_apk!("invalid central directory offset"))?;
+        }
         apk.seek(SeekFrom::Start((central_dir_off - 24) as u64))?;
         apk.read_pod(&mut u64_val)?; // u64_value = block_sz_
         let mut magic = [0u8; 16];
@@ -156,7 +159,7 @@ fn find_apk_path(pkg: &str) -> LoggedResult<Utf8CString> {
             return Ok(Skip);
         }
         let name_bytes = e.name().as_bytes();
-        if name_bytes.starts_with(pkg.as_bytes()) && name_bytes[pkg.len()] == b'-' {
+        if name_bytes.starts_with(pkg.as_bytes()) && name_bytes.len() > pkg.len() && name_bytes[pkg.len()] == b'-' {
             // Found the APK path, we can abort now
             e.resolve_path(&mut buf)?;
             return Ok(Abort);

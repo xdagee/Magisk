@@ -39,7 +39,7 @@ disable_version_config() {
 # $1 = ver
 set_version() {
   local ver=$1
-  local code=$(echo - | awk "{ print $ver * 1000 }")
+  local code=$(echo - | awk -v v="$ver" '{ print v * 1000 }')
   local tag="v$ver"
 
   sed -i "s:versionCode=.*:versionCode=${code}:g" $GCONFIG
@@ -67,7 +67,7 @@ upload() {
   gh auth status
 
   local code=$(grep_prop magisk.versionCode $GCONFIG)
-  local ver=$(echo - | awk "{ print $code / 1000 }")
+  local ver=$(echo - | awk -v c="$code" '{ print c / 1000 }')
   local tag="v$ver"
   local title="Magisk v$ver"
 

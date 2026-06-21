@@ -79,6 +79,9 @@ impl<T: Encodable> Encodable for [T] {
 impl<T: Decodable> Decodable for Vec<T> {
     fn decode(r: &mut impl Read) -> io::Result<Self> {
         let len = i32::decode(r)?;
+        if len < 0 {
+            return Err(io::Error::new(io::ErrorKind::InvalidData, "negative length"));
+        }
         let mut val = Vec::with_capacity(len as usize);
         for _ in 0..len {
             val.push(T::decode(r)?);
@@ -97,6 +100,9 @@ impl Encodable for str {
 impl Decodable for String {
     fn decode(r: &mut impl Read) -> io::Result<String> {
         let len = i32::decode(r)?;
+        if len < 0 {
+            return Err(io::Error::new(io::ErrorKind::InvalidData, "negative length"));
+        }
         let mut val = String::with_capacity(len as usize);
         r.take(len as u64).read_to_string(&mut val)?;
         Ok(val)

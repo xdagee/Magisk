@@ -90,10 +90,20 @@ private fun Project.downloadFile(url: String, checksum: String): File {
     }
     if (!file.exists()) {
         file.parentFile.mkdirs()
-        URI(url).toURL().openStream().use { dl ->
+        val conn = (URI(url).toURL().openConnection() as java.net.HttpURLConnection).apply {
+            connectTimeout = 30_000
+            readTimeout = 60_000
+        }
+        conn.inputStream.use { dl ->
             file.outputStream().use {
                 dl.copyTo(it)
             }
+        }
+        val md = MessageDigest.getInstance("SHA-256")
+        file.inputStream().use { md.update(it.readAllBytes()) }
+        val hash = HexFormat.of().formatHex(md.digest())
+        require(hash == checksum) {
+            "Downloaded file checksum mismatch: expected $checksum, got $hash"
         }
     }
     return file
@@ -219,12 +229,16 @@ fun Project.setupAppCommon() {
         }
 
         buildTypes {
-            val config = signingConfigs.findByName("config") ?: signingConfigs["debug"]
+            val config = signingConfigs.findByName("config")
+            if (config == null) {
+                logger.warn("WARNING: No signing config found in config.prop. " +
+                    "Release builds will be signed with the debug key.")
+            }
             debug {
-                signingConfig = config
+                signingConfig = config ?: signingConfigs["debug"]
             }
             release {
-                signingConfig = config
+                signingConfig = config ?: signingConfigs["debug"]
             }
         }
 
